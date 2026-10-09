@@ -96,6 +96,8 @@ The pull job also skips issues whose recent hourly count is under `THRESHOLD` (d
 
 ## Webhook
 
+Customer setup for the webhook alone, including the Sentry alert form, is in [WEBHOOK.md](WEBHOOK.md).
+
 ```bash
 uvicorn webhook_app:app --port 8000
 ```
@@ -108,12 +110,7 @@ cloudflared tunnel --url http://localhost:8000
 ngrok http 8000
 ```
 
-On the internal integration, set the webhook URL to `https://<tunnel>/sentry`, enable **Alert Rule Action**, and save. Then create an issue alert:
-
-- When the number of events in an issue is more than N in 1 hour. Use the same N as `THRESHOLD`.
-- Filter: the event is not from the latest release.
-- Action: this integration.
-- Action interval: 24 hours.
+On the internal integration, set the webhook URL to `https://<tunnel>/sentry`, enable **Alert Rule Action**, and save. The alert is a volume check only: number of events more than N in one hour, with the If block left on **all**. The latest-release filter cannot be negated on its own, and the handler skips those events itself.
 
 Sentry signs the raw body with the client secret in `Sentry-Hook-Signature` and sets `Sentry-Hook-Resource: event_alert`. A bad signature returns 401. Anything that is not `event_alert` is acknowledged and ignored. The HTTP handler returns as soon as the signature checks out; the discard runs on a FastAPI background task so the call stays inside Sentry's one-second webhook timeout.
 
